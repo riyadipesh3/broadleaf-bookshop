@@ -1,0 +1,783 @@
+@import 'tailwindcss';
+@import '@fontsource/spectral';
+@import '@fontsource-variable/mulish';
+@import '@fontsource/dm-mono';
+
+@source "./**/*.{tsx,ts}";
+
+/* =====================================================================
+   MATERIAL: PAPER. Broadleaf is a bookshop, so the material is paper and
+   the whole page is made of it. This is exactly which CSS does the work.
+   Every item below is load-bearing: delete it and the sheet stops reading
+   as paper.
+
+   1. GRAIN AND PULP  (.paper-grain, applied by .sheet, .sheet-raised,
+      .sheet-shade, .field and the fixed board layer body::before)
+      --speckle  six low-opacity radial pulp inclusions at CO-PRIME tile
+                sizes (7, 11, 13, 17, 19, 23px) so no grid ever appears.
+      --laid    ONE directional repeating gradient at a 9px period. This
+                is the whole trick: a single fibre direction. Two crossing
+                repeats produce a woven-canvas weave, which is the exact
+                failure this avoids, so there is deliberately only one.
+      --mottle  three large low-opacity radial blotches at 100% 100%, the
+                slow cloudiness of uneven pulp.
+      Applied as --paper-grain with --paper-grain-size matching layer for
+      layer. Delete it and the page goes flat and plastic.
+
+   2. FOLDS, real creases and not a gradient overlay
+      .sheet-fold::before is a crease band whose gradient flips light to
+      dark ACROSS the crease line: shadow above, the lit paper edge exactly
+      ON the fold, shadow falling away below.
+      .sheet-fold::after is a small TRIANGULAR SHADOW WEDGE, a clip-path
+      triangle cast by the raised leaf, offset 2px below the crease.
+      Both sit at z-index 0 so type on top of the crease still reads, and
+      .fold-content lifts real content above them.
+      .fold-vertical is the same physics rotated 90 degrees.
+
+   3. DECKLED AND TORN EDGES
+      --deckle-bottom / --deckle-top / --deckle-left are mask-image
+      gradients with an irregular stop sequence in PIXELS over a 16px band,
+      running 0.85, 0.05, 0.9, 0, 0.8, 0.08, 0.92, 0.04, 1. The alpha
+      swings the full 0 to 0.92 range, which is what makes it read as torn
+      rather than soft-edged. Pixel stops mean the tear is the same
+      physical size on a 70px header and a 900px docket.
+      The tear lives in the mask ALPHA, so the filter: drop-shadow() on
+      .torn-* follows the torn silhouette instead of the box.
+      .torn-both intersects two masks so both ends tear at once.
+
+   4. CUT-OUT NOTCHES
+      .notch bites a 16px square thumb notch out of the top right corner
+      with clip-path. clip-path also clips box-shadow away, which is
+      exactly right for a cut edge, so .notch carries its own filter
+      drop-shadow that then traces the cut.
+      .dogear is a literal turned-down paper triangle: two pseudo-elements
+      both clipped to polygon(100% 0, 0 100%, 100% 100%), one lit as the
+      back of the corner, one as the shadow it throws.
+
+   5. LETTERPRESS TYPE
+      .press (display, headings, prices) and .press-soft (mono metadata)
+      each carry a very slight inset pair: a light shadow thrown DOWN and
+      a darker one thrown UP, so the glyph reads as pressed into the sheet
+      rather than printed on top of it. Tracking is pulled tight.
+
+   Colour: one warm-grey board (#e3e2d6), sheets a step deeper and a full
+   step cooler than the banned cream family, warm near-black ink, and ONE
+   accent, printer's ink teal #0d5f6b at 6.1:1 on the sheet. Every shadow
+   is tinted to the warm board hue, never pure black.
+
+   Shape rule: ONE radius, 2px, locked site-wide with no exceptions. Paper
+   is cut and folded, never moulded, so buttons, cards, inputs, images,
+   selects and the footer all share the same 2px corner. Torn and notched
+   edges are masks and clip-paths rather than radius, so they are not a
+   second radius.
+
+   Breakpoints used: sm 640 / md 768 / lg 1024 / xl 1280.
+   ===================================================================== */
+
+@theme {
+  /* The board the sheets lie on, and the sheets themselves. */
+  --color-board: #d5d4c4;
+  --color-board-deep: #c8c7b6;
+  --color-paper: #efeee4;
+  --color-paper-raised: #f7f6ee;
+  --color-paper-shade: #e1e0d1;
+
+  /* Warm near-black ink. Never pure black. */
+  --color-ink: #26241f;
+  --color-ink-soft: #4f4b41;
+  --color-ink-faint: #6a6558;
+
+  /* The one accent: printer's ink teal. 6.1:1 on the sheet. */
+  --color-pen: #0d5f6b;
+
+  /* Display is a serif, and the justification is the brief itself: this
+     is a bookshop and the material is paper, so the letter has to carry
+     the letterpress letter. Spectral is a text serif drawn for both
+     print and screen and it holds its counters at headline weight.
+     Fraunces and Instrument Serif are excluded per the brief. Body and
+     interface stay in Mulish so long descriptions hold up, and DM Mono
+     is reserved for catalogue metadata, ISBNs, prices and dates, where
+     aligned figures matter. Mono is never used for body copy. */
+  --font-display: 'Spectral', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Mulish Variable', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SF Mono', monospace;
+
+  --radius-sheet: 2px;
+}
+
+@layer base {
+  /* The locked radius. Every corner on the page. */
+  *,
+  *::before,
+  *::after {
+    border-radius: var(--radius-sheet);
+  }
+
+  :root {
+    /* 1. Pulp inclusions, at co-prime tile sizes so no grid can form. */
+    --speckle:
+      radial-gradient(circle at 21% 34%, rgb(38 36 31 / 0.05) 0 0.5px, transparent 1.4px),
+      radial-gradient(circle at 67% 12%, rgb(38 36 31 / 0.04) 0 0.45px, transparent 1.35px),
+      radial-gradient(circle at 84% 63%, rgb(38 36 31 / 0.045) 0 0.5px, transparent 1.4px),
+      radial-gradient(circle at 12% 81%, rgb(38 36 31 / 0.04) 0 0.45px, transparent 1.35px),
+      radial-gradient(circle at 44% 47%, rgb(255 255 250 / 0.34) 0 0.55px, transparent 1.45px),
+      radial-gradient(circle at 92% 27%, rgb(255 255 250 / 0.3) 0 0.5px, transparent 1.4px);
+    --speckle-size: 19px 19px, 23px 23px, 29px 29px, 31px 31px, 37px 37px, 41px 41px;
+
+    /* Laid fibre: ONE direction only. Two of these crossing reads as
+       woven canvas rather than paper, which is the failure mode. */
+    --laid: repeating-linear-gradient(
+      96deg,
+      rgb(38 36 31 / 0.016) 0 1px,
+      transparent 1px 13px
+    );
+
+    /* Slow cloudiness of uneven pulp. */
+    --mottle:
+      radial-gradient(42% 36% at 22% 26%, rgb(38 36 31 / 0.03) 0%, transparent 70%),
+      radial-gradient(38% 32% at 74% 68%, rgb(38 36 31 / 0.026) 0%, transparent 72%),
+      radial-gradient(34% 28% at 52% 6%, rgb(255 255 250 / 0.055) 0%, transparent 70%);
+
+    --paper-grain: var(--speckle), var(--laid), var(--mottle);
+    --paper-grain-size: var(--speckle-size), 13px 13px, 100% 100%, 100% 100%, 100% 100%;
+
+    /* 3. Irregular torn edges as mask alpha, in pixel bands. The alpha
+       swings the full 0 to 0.92 range, which is what makes a tear. */
+    --deckle-bottom: linear-gradient(
+      to top,
+      #000 0,
+      rgb(0 0 0 / 0.12) 1.4px,
+      #000 2.6px,
+      #000 4px,
+      rgb(0 0 0 / 0.18) 5.6px,
+      #000 7.4px,
+      rgb(0 0 0 / 0.1) 8.6px,
+      #000 9.8px,
+      #000 12px,
+      rgb(0 0 0 / 0.2) 13.4px,
+      #000 15px,
+      rgb(0 0 0 / 0.08) 16.4px,
+      #000 18px,
+      #000 100%
+    );
+    --deckle-top: linear-gradient(
+      to bottom,
+      #000 0,
+      rgb(0 0 0 / 0.14) 1.2px,
+      #000 2.4px,
+      rgb(0 0 0 / 0.08) 3.6px,
+      #000 5px,
+      #000 6.4px,
+      rgb(0 0 0 / 0.2) 8px,
+      #000 9.8px,
+      rgb(0 0 0 / 0.1) 11.2px,
+      #000 12.6px,
+      rgb(0 0 0 / 0.22) 14.4px,
+      #000 16.4px,
+      #000 100%
+    );
+    --deckle-left: linear-gradient(
+      to right,
+      #000 0,
+      rgb(0 0 0 / 0.12) 1.4px,
+      #000 2.6px,
+      #000 4px,
+      rgb(0 0 0 / 0.18) 5.6px,
+      #000 7.4px,
+      rgb(0 0 0 / 0.1) 8.6px,
+      #000 9.8px,
+      #000 12px,
+      rgb(0 0 0 / 0.2) 13.4px,
+      #000 15px,
+      rgb(0 0 0 / 0.08) 16.4px,
+      #000 18px,
+      #000 100%
+    );
+
+    /* Warm-tinted paper shadow. Never pure black on a light page. */
+    --paper-shadow: rgb(70 62 42 / 0.3);
+    --paper-shadow-deep: rgb(70 62 42 / 0.4);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-board);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* The board itself: pulp grain over a soft off-centre light, so the
+     sheets have something with tone to sit on. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(78% 52% at 18% 0%, rgb(255 255 250 / 0.5) 0%, transparent 62%),
+      radial-gradient(56% 44% at 96% 100%, rgb(38 36 31 / 0.08) 0%, transparent 64%),
+      var(--paper-grain);
+    background-size: 100% 100%, 100% 100%, var(--paper-grain-size);
+  }
+
+  ::selection {
+    background-color: var(--color-pen);
+    color: var(--color-paper-raised);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-pen);
+    outline-offset: 3px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.032em;
+    line-height: 1.03;
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .shell {
+    max-width: 1400px;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .shell {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     1. Paper surfaces. .sheet is a sheet, .sheet-raised is the sheet in
+     front of the stack, .sheet-shade is a shaded or reverse sheet.
+     ------------------------------------------------------------------ */
+  .sheet {
+    position: relative;
+    background-color: var(--color-paper);
+    background-image: var(--paper-grain);
+    background-size: var(--paper-grain-size);
+    box-shadow:
+      0 1px 0 rgb(255 255 250 / 0.75) inset,
+      0 2px 5px -2px var(--paper-shadow),
+      0 12px 26px -18px var(--paper-shadow-deep);
+  }
+
+  .sheet-raised {
+    background-color: var(--color-paper-raised);
+    background-image: var(--paper-grain);
+    background-size: var(--paper-grain-size);
+    box-shadow:
+      0 1px 0 rgb(255 255 250 / 0.9) inset,
+      0 3px 7px -3px var(--paper-shadow),
+      0 20px 40px -24px var(--paper-shadow-deep);
+  }
+
+  .sheet-shade {
+    background-color: var(--color-paper-shade);
+    background-image: var(--paper-grain);
+    background-size: var(--paper-grain-size);
+    box-shadow:
+      0 1px 0 rgb(255 255 250 / 0.5) inset,
+      0 2px 6px -2px var(--paper-shadow),
+      0 14px 30px -20px var(--paper-shadow-deep);
+  }
+
+  /* The shelf bay: the board the six books stand on, with a shadowed
+     recess behind them so the row reads as depth rather than as a grid. */
+  .shelf-bay {
+    position: relative;
+    background: linear-gradient(to bottom, rgb(38 36 31 / 0.09) 0%, rgb(38 36 31 / 0.02) 62%, transparent 100%);
+    box-shadow: 0 1px 0 rgb(255 255 250 / 0.6) inset;
+  }
+
+  /* Book proportions, so a cover is not a 16:9 letterbox crop. */
+  .cover {
+    aspect-ratio: 5 / 7.4;
+    width: 100%;
+    object-fit: cover;
+  }
+
+  /* The board a row of books stands on, lit along its top edge. */
+  .shelf-board {
+    height: 7px;
+    width: 100%;
+    background: linear-gradient(
+      to bottom,
+      #fffdf4 0%,
+      rgb(236 235 224 / 0.9) 34%,
+      rgb(38 36 31 / 0.26) 100%
+    );
+  }
+
+  /* Paper edge highlight: the thin lit lip along the top of a stack. */
+  .edge-lit::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgb(255 255 250 / 0.95) 18%,
+      rgb(255 255 250 / 0.95) 82%,
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  /* Content that must sit ABOVE the fold pseudo-elements. */
+  .fold-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ------------------------------------------------------------------
+     2. FOLDS. The crease band flips light to dark across the crease
+     line, and a triangular shadow wedge is cast by the raised leaf.
+     ------------------------------------------------------------------ */
+  .sheet-fold::before,
+  .sheet-fold::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* The crease itself: shadow, then the lit paper edge on the fold. */
+  .sheet-fold::before {
+    top: var(--fold-at, 50%);
+    height: 24px;
+    transform: translateY(-50%);
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(38 36 31 / 0.05) 20%,
+      rgb(38 36 31 / 0.15) 36%,
+      rgb(255 255 250 / 0.92) 50%,
+      rgb(38 36 31 / 0.17) 64%,
+      rgb(38 36 31 / 0.06) 82%,
+      transparent 100%
+    );
+  }
+
+  /* The wedge: the small triangle of shadow the folded leaf throws. */
+  .sheet-fold::after {
+    top: var(--fold-at, 50%);
+    right: 0;
+    width: 46%;
+    height: 32px;
+    transform: translateY(2px);
+    background: linear-gradient(to bottom, rgb(38 36 31 / 0.2), rgb(38 36 31 / 0));
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+  }
+
+  /* A second crease pair higher up, for a sheet folded twice. */
+  .sheet-fold-2::before {
+    top: 30%;
+    height: 18px;
+  }
+
+  .sheet-fold-2::after {
+    top: 30%;
+    height: 26px;
+  }
+
+  /* A vertical crease for tall sheets: same physics, rotated. */
+  .fold-vertical::before {
+    inset-block: 0;
+    top: 0;
+    left: var(--fold-x, 58%);
+    width: 26px;
+    height: auto;
+    transform: translateX(-50%);
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgb(38 36 31 / 0.07) 20%,
+      rgb(38 36 31 / 0.19) 37%,
+      rgb(255 255 250 / 0.95) 50%,
+      rgb(38 36 31 / 0.17) 63%,
+      rgb(38 36 31 / 0.06) 82%,
+      transparent 100%
+    );
+  }
+
+  /* The wedge, rotated to run down a vertical crease. */
+  .fold-vertical-folded::after {
+    display: block;
+    top: 0;
+    right: auto;
+    left: var(--fold-x, 58%);
+    width: 52%;
+    height: 44%;
+    transform: translate(2px, 0);
+    background: linear-gradient(to right, rgb(38 36 31 / 0.13), rgb(38 36 31 / 0));
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+
+  .fold-vertical::after {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------------
+     4. CUT-OUT NOTCHES. A square thumb notch bitten out of the top right
+     corner. clip-path clips box-shadow away, which is exactly right for a
+     cut edge, so .notch carries its own filter drop-shadow that traces
+     the cut instead of the box.
+     ------------------------------------------------------------------ */
+  .notch {
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 12px 22px rgb(74 66 48 / 0.24));
+  }
+
+  /* The same corner bite applied to a sheet's CONTENTS, so a photograph
+     cannot show through the cut. Pair with .notch on the parent. */
+  .notch-clip {
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+  }
+
+  .dogear {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 3;
+    width: 38px;
+    height: 38px;
+    pointer-events: none;
+    clip-path: polygon(0 0, 100% 100%, 0 100%);
+  }
+
+  /* The back of the turned-down corner. */
+  .dogear::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      225deg,
+      #fdfcf7 0%,
+      var(--color-paper-raised) 46%,
+      var(--color-paper-shade) 100%
+    );
+    box-shadow: -3px 4px 6px -2px rgb(74 66 48 / 0.34);
+  }
+
+  /* The shadow the lifted corner throws back onto the sheet. */
+  .dogear::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(225deg, rgb(38 36 31 / 0.26) 0%, rgb(38 36 31 / 0) 72%);
+  }
+
+  /* ------------------------------------------------------------------
+     3. TORN EDGES. The tear lives in the mask alpha so the drop-shadow
+     follows the torn silhouette instead of the box.
+     ------------------------------------------------------------------ */
+  .torn-bottom {
+    -webkit-mask-image: var(--deckle-bottom);
+    mask-image: var(--deckle-bottom);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    filter: drop-shadow(0 10px 16px rgb(74 66 48 / 0.26));
+  }
+
+  .torn-top {
+    -webkit-mask-image: var(--deckle-top);
+    mask-image: var(--deckle-top);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    filter: drop-shadow(0 -9px 14px rgb(74 66 48 / 0.22));
+  }
+
+  /* A sheet torn off the top of a stack: the board is painted behind the
+     bite so the tear reveals board rather than the page underneath. */
+  .torn-top-board {
+    position: relative;
+  }
+
+  .torn-top-board::after {
+    content: '';
+    position: absolute;
+    inset: -26px 0 auto 0;
+    height: 26px;
+    z-index: -1;
+    background-color: var(--color-board);
+    background-image: var(--paper-grain);
+    background-size: var(--paper-grain-size);
+  }
+
+  .torn-both {
+    -webkit-mask-image: var(--deckle-top), var(--deckle-bottom);
+    mask-image: var(--deckle-top), var(--deckle-bottom);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+    filter: drop-shadow(0 16px 26px rgb(74 66 48 / 0.26));
+  }
+
+  .deckle-left {
+    -webkit-mask-image: var(--deckle-left);
+    mask-image: var(--deckle-left);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    filter: drop-shadow(-11px 16px 24px rgb(74 66 48 / 0.24));
+  }
+
+  /* The book's own spine: a lit gradient bar down the left of a cover. */
+  .spine {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 2;
+    width: 9px;
+    background: linear-gradient(
+      to right,
+      rgb(38 36 31 / 0.34) 0%,
+      rgb(38 36 31 / 0.12) 34%,
+      rgb(255 255 250 / 0.3) 62%,
+      rgb(38 36 31 / 0.06) 100%
+    );
+  }
+
+  /* ------------------------------------------------------------------
+     5. LETTERPRESS TYPE. A very slight inset pair: light thrown down,
+     dark thrown up, so the glyph is pressed into the sheet.
+     ------------------------------------------------------------------ */
+  .press {
+    text-shadow:
+      0 1px 0 rgb(255 255 250 / 0.58),
+      0 -1px 0 rgb(38 36 31 / 0.26);
+  }
+
+  .press-soft {
+    text-shadow:
+      0 1px 0 rgb(255 255 250 / 0.5),
+      0 -1px 0 rgb(38 36 31 / 0.18);
+  }
+
+  /* ------------------------------------------------------------------
+     Component layer
+     ------------------------------------------------------------------ */
+  .micro {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    text-shadow: 0 1px 0 rgb(255 255 250 / 0.45);
+  }
+
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.55;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-soft);
+    text-shadow: 0 1px 0 rgb(255 255 250 / 0.45);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    white-space: nowrap;
+    padding: 0.72rem 1.2rem;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    transition:
+      transform 300ms cubic-bezier(0.32, 0.72, 0, 1),
+      background-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+      box-shadow 300ms cubic-bezier(0.32, 0.72, 0, 1),
+      color 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .btn:active {
+    transform: translateY(1px) scale(0.99);
+    box-shadow: 0 1px 2px -1px var(--paper-shadow);
+  }
+
+  /* Filled ink, pressed hardest, so the inset pair is strongest here. */
+  .btn-primary {
+    background-color: var(--color-pen);
+    color: var(--color-paper-raised);
+    box-shadow:
+      0 1px 0 rgb(255 255 250 / 0.22) inset,
+      0 -1px 0 rgb(13 95 107 / 0.7) inset,
+      0 2px 4px -2px var(--paper-shadow-deep);
+  }
+
+  .btn-primary:hover {
+    background-color: #0b515c;
+  }
+
+  /* Outlined ink: the same letterpress pair, sitting on the sheet. */
+  .btn-ghost {
+    background-color: rgb(255 255 250 / 0.4);
+    color: var(--color-ink);
+    box-shadow:
+      0 1px 0 rgb(255 255 250 / 0.8) inset,
+      0 -1px 0 rgb(38 36 31 / 0.12) inset,
+      0 0 0 1px rgb(38 36 31 / 0.42),
+      0 2px 5px -3px var(--paper-shadow);
+  }
+
+  .btn-ghost:hover {
+    color: var(--color-pen);
+    box-shadow:
+      0 1px 0 rgb(255 255 250 / 0.8) inset,
+      0 0 0 1px var(--color-pen),
+      0 3px 7px -3px var(--paper-shadow);
+  }
+
+  .btn-icon {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    margin-right: -0.45rem;
+    background: rgb(255 255 250 / 0.18);
+    transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .btn:hover .btn-icon {
+    transform: translate(2px, -1px);
+  }
+
+  .btn-ghost .btn-icon {
+    background: rgb(13 95 107 / 0.12);
+    color: var(--color-pen);
+  }
+
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    text-decoration-color: rgb(38 36 31 / 0.34);
+    transition: text-decoration-color 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .link-underline:hover {
+    text-decoration-color: var(--color-pen);
+  }
+
+  /* Ruled line, printed not drawn: a hairline with a lit underside. */
+  .rule {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgb(38 36 31 / 0.22) 6%,
+      rgb(38 36 31 / 0.22) 94%,
+      transparent
+    );
+  }
+
+  .field {
+    width: 100%;
+    padding: 0.68rem 0.8rem;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    color: var(--color-ink);
+    background-color: var(--color-paper-raised);
+    background-image: var(--paper-grain);
+    background-size: var(--paper-grain-size);
+    box-shadow:
+      0 1px 2px -1px var(--paper-shadow),
+      0 0 0 1px rgb(38 36 31 / 0.3) inset;
+    transition:
+      box-shadow 300ms cubic-bezier(0.32, 0.72, 0, 1),
+      background-color 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .field::placeholder {
+    color: var(--color-ink-faint);
+  }
+
+  .field:focus {
+    outline: none;
+    background-color: #f8f7f0;
+    box-shadow:
+      0 1px 2px -1px var(--paper-shadow),
+      0 0 0 1px var(--color-pen) inset,
+      0 0 0 3px rgb(13 95 107 / 0.18);
+  }
+
+  select.field {
+    appearance: none;
+    padding-right: 2.1rem;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--color-ink-soft) 50%),
+      linear-gradient(135deg, var(--color-ink-soft) 50%, transparent 50%),
+      var(--paper-grain);
+    background-position:
+      right 1.05rem center,
+      right 0.78rem center,
+      0 0;
+    background-size:
+      5px 5px,
+      5px 5px,
+      var(--paper-grain-size);
+    background-repeat: no-repeat;
+  }
+
+  .field-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
